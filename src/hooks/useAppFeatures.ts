@@ -6,6 +6,7 @@ export interface AppFeaturesState {
   features: AppFeature[];
   loading: boolean;
   error: string | null;
+  reload: () => void;
 }
 
 export function useAppFeatures(): AppFeaturesState {
@@ -22,7 +23,11 @@ export function useAppFeatures(): AppFeaturesState {
     return unsub;
   }, []);
 
-  return { features, loading, error };
+  const reload = () => {
+    setError(null);
+  };
+
+  return { features, loading, error, reload };
 }
 
 export function isFeatureEnabled(features: AppFeature[], key: string): boolean {

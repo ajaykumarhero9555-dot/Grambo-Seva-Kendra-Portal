@@ -11,18 +11,18 @@ import {
   Trash2,
   User as UserIcon,
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { adminSetAccountStatus, adminDeleteUser } from '@/lib/firestore';
 import { getErrorMessage } from '@/lib/errors';
 import StatusBadge from '@/components/StatusBadge';
 import { maskAadhaar, maskPan } from '@/lib/validation';
 import type { AdminUserRow } from '@/admin/useAdminUsers';
-import type { AccountStatus } from '@/lib/types';
+import type { AccountStatus, DocumentStatus } from '@/lib/types';
 
 interface UserProfilePanelProps {
   row: AdminUserRow;
   adminId: string;
   onClose: () => void;
-  onChanged: () => Promise<void>;
+  onChanged: () => void;
 }
 
 const ACTION_BTN =
@@ -36,12 +36,8 @@ export default function UserProfilePanel({ row, adminId, onClose, onChanged }: U
 
   const handleStatus = async (newStatus: AccountStatus) => {
     try {
-      const { error: rpcError } = await supabase.rpc('admin_set_account_status', {
-        p_user: profile.id,
-        p_status: newStatus,
-      });
-      if (rpcError) throw rpcError;
-      await onChanged();
+      await adminSetAccountStatus(profile.id, newStatus, adminId);
+      onChanged();
     } catch (cause) {
       alert(getErrorMessage(cause, 'We could not complete this action. Please try again.'));
     }
@@ -50,10 +46,9 @@ export default function UserProfilePanel({ row, adminId, onClose, onChanged }: U
   const handleDelete = async () => {
     if (!window.confirm(`Delete ${name} permanently? Their account and documents will be removed.`)) return;
     try {
-      const { error: rpcError } = await supabase.rpc('admin_delete_user', { p_user: profile.id });
-      if (rpcError) throw rpcError;
+      await adminDeleteUser(profile.id, adminId);
       onClose();
-      await onChanged();
+      onChanged();
     } catch (cause) {
       alert(getErrorMessage(cause, 'We could not delete this user. Please try again.'));
     }
@@ -171,7 +166,7 @@ interface DocChipProps {
   icon: typeof Mail;
   title: string;
   value: string;
-  status: import('@/lib/types').DocumentStatus | null;
+  status: DocumentStatus | null;
   tint: string;
 }
 

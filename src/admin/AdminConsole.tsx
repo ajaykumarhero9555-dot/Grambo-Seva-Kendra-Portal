@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Ban, FileCheck2, PauseCircle, PlayCircle, ShieldCheck, Trash2 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { adminSetAccountStatus, adminDeleteUser } from '@/lib/firestore';
 import { getErrorMessage } from '@/lib/errors';
 import StatusBadge from '@/components/StatusBadge';
 import { useAdminUsers, type AdminUserRow } from '@/admin/useAdminUsers';
@@ -30,7 +30,7 @@ export default function AdminConsole({ adminId }: AdminConsoleProps) {
     setActionError(null);
     try {
       await task();
-      await reload();
+      reload();
     } catch (cause) {
       setActionError(getErrorMessage(cause, 'We could not complete this action. Please try again.'));
     } finally {
@@ -42,11 +42,7 @@ export default function AdminConsole({ adminId }: AdminConsoleProps) {
     runAction(
       row,
       async () => {
-        const { error: rpcError } = await supabase.rpc('admin_set_account_status', {
-          p_user: row.profile.id,
-          p_status: status,
-        });
-        if (rpcError) throw rpcError;
+        await adminSetAccountStatus(row.profile.id, status, adminId);
       },
       confirmText
     );
@@ -55,8 +51,7 @@ export default function AdminConsole({ adminId }: AdminConsoleProps) {
     runAction(
       row,
       async () => {
-        const { error: rpcError } = await supabase.rpc('admin_delete_user', { p_user: row.profile.id });
-        if (rpcError) throw rpcError;
+        await adminDeleteUser(row.profile.id, adminId);
         setSelectedId(null);
       },
       `Delete ${row.profile.full_name || row.profile.email} permanently? Their account and documents will be removed.`

@@ -1,14 +1,13 @@
 import { useRef, useState, type FormEvent } from 'react';
 import { Loader2, Lock, Database, AppWindow, Unlock, X, Check } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { setPortalLock } from '@/lib/firestore';
 import { getErrorMessage } from '@/lib/errors';
+import type { LockType } from '@/lib/types';
 
 interface PortalLockModalProps {
   onClose: () => void;
 }
-
-type LockType = 'portal' | 'data' | 'apps' | 'un_apps';
 
 interface LockOption {
   type: LockType;
@@ -135,16 +134,9 @@ export default function PortalLockModal({ onClose }: PortalLockModalProps) {
       return;
     }
 
-
-
     setSubmitting(true);
     try {
-      const { error: rpcError } = await supabase.rpc('admin_set_portal_lock', {
-        p_lock_type: selected,
-        p_activate_at: start.toISOString(),
-        p_deactivate_at: end.toISOString(),
-      });
-      if (rpcError) throw rpcError;
+      await setPortalLock(selected, start.toISOString(), end.toISOString());
       setSuccess(`${labelFor(selected)} timer updated successfully.`);
     } catch (cause) {
       setError(getErrorMessage(cause, 'We could not update the lock timer. Please try again.'));

@@ -101,10 +101,10 @@ export default function UserDashboard({ userId }: UserDashboardProps) {
                 <p className="text-sm text-rose-700">{error}</p>
                 <button
                   type="button"
-                  onClick={() => reload()}
+                  onClick={() => window.location.reload()}
                   className="flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
                 >
-                  Sign out
+                  Try again
                 </button>
               </div>
             )}

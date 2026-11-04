@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { CheckCircle2, Loader2, Send } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { submitKyc } from '@/lib/firestore';
 import { getErrorMessage } from '@/lib/errors';
 import {
   isValidAadhaar,
@@ -14,14 +14,15 @@ import type { KycRecord } from '@/lib/types';
 
 interface KycFormProps {
   kyc: KycRecord | null;
+  userId: string;
   disabled: boolean;
-  onSaved: () => Promise<void>;
+  onSaved: () => void;
 }
 
 const inputClass =
   'w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 font-mono text-sm uppercase tracking-wider text-slate-900 placeholder:font-sans placeholder:normal-case placeholder:tracking-normal placeholder:text-slate-400 transition-colors focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/20 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500';
 
-export default function KycForm({ kyc, disabled, onSaved }: KycFormProps) {
+export default function KycForm({ kyc, userId, disabled, onSaved }: KycFormProps) {
   const panLocked = kyc?.pan_status === 'verified';
   const aadhaarLocked = kyc?.aadhaar_status === 'verified';
 
@@ -47,16 +48,15 @@ export default function KycForm({ kyc, disabled, onSaved }: KycFormProps) {
 
     setSubmitting(true);
     try {
-      const { error: rpcError } = await supabase.rpc('submit_kyc', {
-        p_pan: panLocked ? null : normalizePan(pan),
-        p_aadhaar: aadhaarLocked ? null : normalizeAadhaar(aadhaar),
-      });
-      if (rpcError) throw rpcError;
-
+      await submitKyc(
+        userId,
+        panLocked ? null : normalizePan(pan),
+        aadhaarLocked ? null : normalizeAadhaar(aadhaar)
+      );
       setPan('');
       setAadhaar('');
       setSaved(true);
-      await onSaved();
+      onSaved();
     } catch (cause) {
       setError(getErrorMessage(cause, 'We could not submit your details. Please try again.'));
     } finally {

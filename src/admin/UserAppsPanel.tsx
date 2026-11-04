@@ -1,10 +1,10 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { Check, Loader2 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { scheduleFeatureUpdate, updateFeature, applyScheduledUpdate } from '@/lib/firestore';
 import { getErrorMessage } from '@/lib/errors';
 import { useAppFeatures } from '@/hooks/useAppFeatures';
 import { useScheduledFeatureUpdates } from '@/admin/useScheduledFeatureUpdates';
-import type { AppFeature, AppFeatureKey } from '@/lib/types';
+import type { AppFeature } from '@/lib/types';
 
 function toLocalInputValue(date: Date): string {
   return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
@@ -28,7 +28,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 export default function UserAppsPanel() {
   const { features, error: featuresError, reload: reloadFeatures } = useAppFeatures();
   const { pending, error: scheduleError, reload: reloadScheduled } = useScheduledFeatureUpdates();
-  const [selected, setSelected] = useState<AppFeatureKey[]>([]);
+  const [selected, setSelected] = useState<string[]>([]);
   const [enabled, setEnabled] = useState(true);
   const [runAt, setRunAt] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -46,9 +46,9 @@ export default function UserAppsPanel() {
     return Array.from(map.entries());
   }, [features]);
 
-  const labelFor = (key: AppFeatureKey) => features.find((feature) => feature.key === key)?.label ?? key;
+  const labelFor = (key: string) => features.find((feature) => feature.key === key)?.label ?? key;
 
-  const toggle = (key: AppFeatureKey) =>
+  const toggle = (key: string) =>
     setSelected((current) => (current.includes(key) ? current.filter((item) => item !== key) : [...current, key]));
 
   const handleUpdate = async (event: FormEvent<HTMLFormElement>) => {
@@ -56,6 +56,7 @@ export default function UserAppsPanel() {
     setError(null);
     setSuccess(null);
 
+    const isImmediate = !runAt;
     let runAtIso = new Date().toISOString();
     if (runAt) {
       const when = new Date(runAt);
@@ -68,16 +69,19 @@ export default function UserAppsPanel() {
 
     setSubmitting(true);
     try {
-      const { error: rpcError } = await supabase.rpc('admin_schedule_feature_update', {
-        p_features: selected,
-        p_enabled: enabled,
-        p_run_at: runAtIso,
-      });
-      if (rpcError) throw rpcError;
-      setSuccess(runAt ? 'Update scheduled. It will be pushed to the user app at the chosen time.' : 'Update applied to the user app.');
+      if (isImmediate) {
+        for (const key of selected) {
+          await updateFeature(key, enabled);
+        }
+        setSuccess('Update applied to the user app.');
+      } else {
+        await scheduleFeatureUpdate(selected, enabled, runAtIso);
+        setSuccess('Update scheduled. It will be pushed to the user app at the chosen time.');
+      }
       setSelected([]);
       setRunAt('');
-      await Promise.all([reloadFeatures(), reloadScheduled()]);
+      reloadFeatures();
+      reloadScheduled();
     } catch (cause) {
       setError(getErrorMessage(cause, 'We could not save this update. Please try again.'));
     } finally {

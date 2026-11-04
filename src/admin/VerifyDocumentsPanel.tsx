@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { CheckCircle2, XCircle } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { adminReviewKyc } from '@/lib/firestore';
 import { getErrorMessage } from '@/lib/errors';
 import StatusBadge from '@/components/StatusBadge';
 import type { AdminUserRow } from '@/admin/useAdminUsers';
@@ -10,7 +10,7 @@ import type { DocumentStatus } from '@/lib/types';
 interface VerifyDocumentsPanelProps {
   row: AdminUserRow;
   onClose: () => void;
-  onChanged: () => Promise<void>;
+  onChanged: () => void;
 }
 
 export default function VerifyDocumentsPanel({ row, onClose, onChanged }: VerifyDocumentsPanelProps) {
@@ -23,14 +23,8 @@ export default function VerifyDocumentsPanel({ row, onClose, onChanged }: Verify
     setBusy(true);
     setError(null);
     try {
-      const { error: rpcError } = await supabase.rpc('admin_review_kyc', {
-        p_user: profile.id,
-        p_document: document,
-        p_decision: decision,
-        p_reason: reasons[document] || null,
-      });
-      if (rpcError) throw rpcError;
-      await onChanged();
+      await adminReviewKyc(profile.id, document, decision, reasons[document] || null);
+      onChanged();
     } catch (cause) {
       setError(getErrorMessage(cause, 'We could not save this review. Please try again.'));
     } finally {
