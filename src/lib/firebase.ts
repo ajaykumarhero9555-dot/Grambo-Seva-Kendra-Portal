@@ -9,8 +9,8 @@ const firebaseConfig = {
   projectId: "girembo-sewa-kendra-598ed",
   storageBucket: "girembo-sewa-kendra-598ed.firebasestorage.app",
   messagingSenderId: "427828551511",
-  appId: "1:427828551511:web:1fc038a196a9a64bb4e812",
-  measurementId: "G-3KCTXPVMZ5",
+  appId: "1:427828551511:web:722a88ee386169eeb4e812",
+  measurementId: "G-83TT08BNGY",
 };
 
 const app = initializeApp(firebaseConfig);
