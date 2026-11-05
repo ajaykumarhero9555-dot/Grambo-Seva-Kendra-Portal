@@ -12,6 +12,7 @@ import {
   onSnapshot,
   serverTimestamp,
   Timestamp,
+  type DocumentData,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { DEFAULT_FEATURES } from '@/lib/types';
@@ -120,7 +121,7 @@ export async function submitKyc(
 ): Promise<void> {
   const ref = doc(db, 'kyc_records', uid);
   const existing = await getDoc(ref);
-  const data: Record<string, unknown> = {
+  const data: DocumentData = {
     updated_at: serverTimestamp(),
   };
 
@@ -187,7 +188,7 @@ export async function adminReviewKyc(
     throw new Error('A reason is required');
   }
   const ref = doc(db, 'kyc_records', uid);
-  const update: Record<string, unknown> = {
+  const update: DocumentData = {
     reviewed_at: serverTimestamp(),
     updated_at: serverTimestamp(),
   };
