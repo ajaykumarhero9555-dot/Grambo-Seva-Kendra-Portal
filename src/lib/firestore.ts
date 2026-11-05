@@ -230,8 +230,15 @@ export async function isAdmin(uid: string): Promise<boolean> {
 }
 
 export async function claimFirstAdmin(uid: string): Promise<boolean> {
-  const snap = await getDocs(collection(db, 'admins'));
-  if (snap.size > 0) return false;
+  const bootstrapRef = doc(db, 'system', 'admin_bootstrap');
+  const bootstrap = await getDoc(bootstrapRef);
+  if (bootstrap.exists() && bootstrap.data().claimed_by !== uid) return false;
+  if (!bootstrap.exists()) {
+    await setDoc(bootstrapRef, {
+      claimed_by: uid,
+      claimed_at: serverTimestamp(),
+    });
+  }
   await setDoc(doc(db, 'admins', uid), {
     uid,
     created_at: serverTimestamp(),
@@ -251,21 +258,6 @@ export async function ensureDefaultFeatures(): Promise<void> {
       updated_at: serverTimestamp(),
     });
   }
-}
-
-export async function getAllFeatures(): Promise<AppFeature[]> {
-  await ensureDefaultFeatures();
-  const snap = await getDocs(query(collection(db, 'app_features'), orderBy('label')));
-  return snap.docs.map((d) => {
-    const data = d.data();
-    return {
-      key: data.key ?? d.id,
-      label: data.label ?? '',
-      description: data.description ?? '',
-      enabled: data.enabled ?? false,
-      updated_at: tsToDate(data.updated_at),
-    };
-  });
 }
 
 export async function updateFeature(key: string, enabled: boolean): Promise<void> {
@@ -290,16 +282,6 @@ export async function scheduleFeatureUpdate(
     run_at: runAt,
     status: 'pending',
     created_at: serverTimestamp(),
-  });
-}
-
-export async function applyScheduledUpdate(updateId: string, featureKeys: string[], enabled: boolean): Promise<void> {
-  for (const key of featureKeys) {
-    await updateFeature(key, enabled);
-  }
-  await updateDoc(doc(db, 'scheduled_feature_updates', updateId), {
-    status: 'applied',
-    applied_at: serverTimestamp(),
   });
 }
 

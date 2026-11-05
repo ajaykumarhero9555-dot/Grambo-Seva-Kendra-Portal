@@ -1,6 +1,6 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { Check, Loader2 } from 'lucide-react';
-import { scheduleFeatureUpdate, updateFeature, applyScheduledUpdate } from '@/lib/firestore';
+import { scheduleFeatureUpdate, updateFeature } from '@/lib/firestore';
 import { getErrorMessage } from '@/lib/errors';
 import { useAppFeatures } from '@/hooks/useAppFeatures';
 import { useScheduledFeatureUpdates } from '@/admin/useScheduledFeatureUpdates';

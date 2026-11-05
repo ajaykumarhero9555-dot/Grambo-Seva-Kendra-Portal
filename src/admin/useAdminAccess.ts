@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { auth } from '@/lib/firebase';
-import { isAdmin, claimFirstAdmin } from '@/lib/firestore';
+import { isAdmin, claimFirstAdmin, ensureDefaultFeatures } from '@/lib/firestore';
 import { getErrorMessage } from '@/lib/errors';
 
 export type AdminStatus = 'checking' | 'admin' | 'denied';
@@ -27,6 +27,10 @@ export function useAdminAccess(): AdminAccessState {
       }
       try {
         const result = await isAdmin(user.uid);
+        if (!active) return;
+        if (result) {
+          await ensureDefaultFeatures();
+        }
         if (active) setStatus(result ? 'admin' : 'denied');
       } catch (cause) {
         if (active) {
@@ -52,6 +56,7 @@ export function useAdminAccess(): AdminAccessState {
     try {
       const result = await claimFirstAdmin(user.uid);
       if (result) {
+        await ensureDefaultFeatures();
         setStatus('admin');
       } else {
         setError('An administrator is already set up. Ask them to add your account.');
@@ -62,6 +67,7 @@ export function useAdminAccess(): AdminAccessState {
       setClaiming(false);
     }
   }, []);
+
 
   return { status, error, claiming, claimAdmin };
 }
