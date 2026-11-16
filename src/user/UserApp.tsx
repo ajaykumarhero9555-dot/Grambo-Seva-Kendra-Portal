@@ -20,7 +20,7 @@ export default function UserApp() {
       <div className="flex min-h-screen flex-col items-center justify-center gap-8 bg-gradient-to-br from-teal-50 via-white to-slate-100 px-4 py-12">
         <BrandMark />
         <AuthForm
-          title="Welcome to Grambo Seva Kendra"
+          title="Welcome to Grambo Seva Kendra Portal"
           subtitle="Sign in to view your account and complete your identity verification."
         />
       </div>
