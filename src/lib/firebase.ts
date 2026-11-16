@@ -4,13 +4,15 @@ import { getFirestore } from "firebase/firestore";
 import { getAnalytics, isSupported } from "firebase/analytics";
 
 const firebaseConfig = {
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
   apiKey: "AIzaSyC5gz8dcJ2eTwVoJI8uGxqbKNrWTsDVZyw",
   authDomain: "girembo-sewa-kendra-598ed.firebaseapp.com",
   projectId: "girembo-sewa-kendra-598ed",
   storageBucket: "girembo-sewa-kendra-598ed.firebasestorage.app",
   messagingSenderId: "427828551511",
   appId: "1:427828551511:web:722a88ee386169eeb4e812",
-  measurementId: "G-83TT08BNGY",
+  measurementId: "G-83TT08BNGY"
 };
 
 const app = initializeApp(firebaseConfig);
